@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Line Chart</title>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js" integrity="sha512-QSkVNOCYLtj73J4hbmVoOV6KVZuMluZlioC+trLpewV8qMjsWqlIQvkn1KGX2StWvPMdWGBqim1xlC8krl1EKQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    </head>
+<body>  
+    <p>Select ticker</p>
+    <select id="ticker_arr" onChange="showGraph()"></select>
+    <div style="width:80%">
+        <div>
+            <canvas id="canvas" height="450" width="800"></canvas>
+        </div>
+    </div>
+    <script>
+        const zeroPad = (num, places) => String(num).padStart(places, '0'); // for leading zeros
+        var select = document.getElementById("ticker_arr");
+        for (var i = 0; i < 99; i++) {
+                ticker_id  = zeroPad(i, 2);
+                var el = document.createElement("option");
+                el.textContent = 'ticker_' + ticker_id;
+                el.value = ticker_id;
+                select.appendChild(el);
+            }
+        
+        function showGraph() {
+            //unsubcribing from feed on current ticker
+            ws.send(JSON.stringify ({"command": "unsubscribe", "ticker": current_ticker}));
+            current_ticker = document.getElementById("ticker_arr").value;
+            chartData.datasets[0].data = [];
+            chartData.datasets[0].label = '';
+            chartData.labels = [];
+            //subscribing to new ticker
+            ws.send(JSON.stringify ({"command": "subscribe", "ticker": current_ticker}));
+        }
+    </script>
+
+    <script type="text/javascript">
+        var chartData = {
+            labels: [],
+            datasets: [{
+                label: 'Some Ticker',
+                data: [],
+                fill: false,
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0
+            }]
+        };
+        var options = {
+            responsive: true,
+            scaleShowGridLines: false,
+            scaleLineColor: "rgba(0,0,0,.1)",
+        }
+        var ctx = document.getElementById("canvas").getContext("2d");
+        var myLineChart = new Chart(ctx, {
+            type: 'line',
+            data: chartData,
+            options: options
+        });
+
+        if ("WebSocket" in window) {
+
+            var ws = new WebSocket("ws://127.0.0.1:8000/ws");
+            var current_ticker = document.getElementById("ticker_arr").value; 
+            var subscription = {
+                "command": "subscribe",
+                "ticker": current_ticker}; 
+                    
+            ws.onopen = function() { ws.send(JSON.stringify (subscription)); };
+
+            ws.onmessage = function(evt) {
+                var received_msg = JSON.parse(evt.data)
+                chartData.datasets[0].label = 'ticker_' + received_msg[0];
+                // console.log(received_msg[0]);
+                // console.log(received_msg[1]);
+                timePrice = received_msg[1]
+                for (let i = 0; i < received_msg[1].length; i++) {
+                    chartData.datasets[0].data.push(received_msg[1][i]['price']);
+                    chartData.labels.push(received_msg[1][i]['time']);
+                    myLineChart.update('active'); 
+                } 
+            };
+
+            ws.onclose = function() {
+                // websocket is closed.
+                console.log("Connection is closed...");
+            };
+        } else {
+            // The browser doesn't support WebSocket
+            console.log("WebSocket NOT supported by your Browser!");
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,12 @@
+
+/venv
+.vscodepaste
+.env
+.vscode/*
+logs/*
+
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class

@@ -35,10 +35,10 @@ def generate_movement():
 
 ### Notes:
 
-    - No persisitent storage, all data will be lost after restart (no special requirments for this).
+    - No persisitent storage, all data will be lost after restart (no special requirements for this).
     - www.chartjs.org for charting lib.
     - Janus for threadsafe queues.
-    - logging with loguru
+    - Logging with loguru.
     - API input validation with pydantic.
 
 ### Websocket API:
